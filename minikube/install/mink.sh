@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+
+#sudo date -s "2026-04-23 14:30:00"
+
 set -e
 
 echo "🔹 Updating system..."
@@ -41,3 +44,15 @@ minikube kubectl -- get nodes
 
 echo "✅ Setup complete!"
 EOF
+
+
+#docker system prune -a -f
+#rm -rf ~/.minikube
+#rm -rf ~/.kube
+
+#df -h
+
+#docker ps
+
+#minikube start --driver=docker --memory=2000mb
+
