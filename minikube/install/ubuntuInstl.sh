@@ -22,16 +22,16 @@ require_root() {
   fi
 }
 
-check_network() {
-  log "Checking internet connectivity..."
-  ping -c1 google.com &>/dev/null || err "No internet connection"
-}
+#check_network() {
+#  log "Checking internet connectivity..."
+#  ping -c1 google.com &>/dev/null || err "No internet #connection"
+#}
 
 # -----------------------------
 # MAIN
 # -----------------------------
 require_root
-check_network
+#check_network
 
 log "Updating system..."
 apt update -y
