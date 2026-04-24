@@ -1,0 +1,5 @@
+services:
+  java-helloworld:
+    build: .
+    container_name: java-helloworld-container
+    command: ["java", "HelloWorld"]
