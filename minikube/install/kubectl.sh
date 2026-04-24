@@ -31,4 +31,11 @@ kubectl get nodes || echo "⚠️ Unable to fetch nodes"
 echo "🔹 Checking all pods..."
 kubectl get pods -A || echo "⚠️ Unable to fetch pods"
 
+echo "__update-context__f"
+
+minikube update-context
+
+kubectl config current-context
+
+
 echo "✅ Setup complete!"
