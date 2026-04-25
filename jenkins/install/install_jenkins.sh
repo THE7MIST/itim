@@ -1,50 +1,46 @@
-#!/bin/bash
+echo "⚙️ Configuring Jenkins with default admin/admin..."
 
-set -e  # Exit immediately if any command fails
+# Stop Jenkins if running
+sudo systemctl stop jenkins || true
 
-echo "🔄 Updating system..."
-sudo apt update -y
+# Disable setup wizard
+echo "JAVA_ARGS=\"-Djenkins.install.runSetupWizard=false\"" | \
+  sudo tee /etc/default/jenkins > /dev/null
 
-echo "☕ Installing Java (OpenJDK 21)..."
-sudo apt install -y fontconfig openjdk-21-jre
+# Create basic security config
+sudo mkdir -p /var/lib/jenkins
 
-echo "✅ Verifying Java installation..."
-java -version
+sudo tee /var/lib/jenkins/config.xml > /dev/null <<'EOF'
+<?xml version='1.1' encoding='UTF-8'?>
+<hudson>
+  <useSecurity>true</useSecurity>
+  <securityRealm class="hudson.security.HudsonPrivateSecurityRealm">
+    <disableSignup>true</disableSignup>
+    <enableCaptcha>false</enableCaptcha>
+  </securityRealm>
+  <authorizationStrategy class="hudson.security.FullControlOnceLoggedInAuthorizationStrategy">
+    <denyAnonymousReadAccess>true</denyAnonymousReadAccess>
+  </authorizationStrategy>
+</hudson>
+EOF
 
-echo "🔐 Adding Jenkins repository key..."
-sudo mkdir -p /etc/apt/keyrings
+# Create admin user manually
+sudo mkdir -p /var/lib/jenkins/users/admin
 
-sudo wget -q -O /etc/apt/keyrings/jenkins-keyring.asc \
-  https://pkg.jenkins.io/debian-stable/jenkins.io-2026.key
+sudo tee /var/lib/jenkins/users/admin/config.xml > /dev/null <<'EOF'
+<?xml version='1.1' encoding='UTF-8'?>
+<user>
+  <fullName>admin</fullName>
+  <properties>
+    <hudson.security.HudsonPrivateSecurityRealm_-Details>
+      <passwordHash>#jbcrypt:$2a$10$7EqJtq98hPqEX7fNZaFWoOePaWxn96p36vU1u7Z0pniS3pSke1G6.</passwordHash>
+    </hudson.security.HudsonPrivateSecurityRealm_-Details>
+  </properties>
+</user>
+EOF
 
-echo "📦 Adding Jenkins repository..."
-echo "deb [signed-by=/etc/apt/keyrings/jenkins-keyring.asc]" \
-  https://pkg.jenkins.io/debian-stable binary/ | \
-  sudo tee /etc/apt/sources.list.d/jenkins.list > /dev/null
-
-echo "🔄 Updating package list again..."
-sudo apt update -y
-
-echo "🚀 Installing Jenkins..."
-sudo apt install -y jenkins
-
-echo "🔁 Reloading systemd..."
-sudo systemctl daemon-reload
-
-echo "⚙️ Enabling Jenkins service..."
-sudo systemctl enable jenkins
+# Fix permissions
+sudo chown -R jenkins:jenkins /var/lib/jenkins
 
 echo "▶️ Starting Jenkins..."
 sudo systemctl start jenkins
-
-echo "📊 Checking Jenkins status..."
-sudo systemctl status jenkins --no-pager
-
-echo "🔑 Getting initial admin password..."
-sudo cat /var/lib/jenkins/secrets/initialAdminPassword
-
-echo ""
-echo "🌐 Open Jenkins in browser:"
-echo "👉 http://localhost:8080"
-echo ""
-echo "🎯 Installation complete!"
