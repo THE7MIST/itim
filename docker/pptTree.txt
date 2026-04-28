@@ -1,0 +1,123 @@
+DOCKER & CONTAINERIZATION
+│
+├── 1. Introduction
+│   ├── Running Applications
+│   ├── Virtualization vs Containerization
+│   ├── What is Docker?
+│   └── Container vs VM
+│
+├── 2. Installation & Setup
+│   ├── Install Docker (APT / Snap)
+│   ├── Verify installation
+│   └── Standards (OCI, CNCF, Moby)
+│
+├── 3. Docker Basics (Ops View)
+│   ├── docker images
+│   ├── docker pull nginx
+│   ├── docker run
+│   ├── docker exec
+│   ├── docker ps / stop / rm
+│   │
+│   └── Q: Run NGINX container and access it in browser (port mapping demo)
+│
+├── 4. Dev Workflow
+│   ├── Clone GitHub repo
+│   ├── Inspect Dockerfile
+│   ├── Build image
+│   └── Run container
+│   │
+│   └── Q: Clone → Build → Run application container
+│
+├── 5. Docker Architecture
+│   ├── Docker Engine
+│   ├── containerd
+│   ├── runc
+│   └── Daemon
+│
+├── 6. Images & Lifecycle
+│   ├── docker pull / images / rmi
+│   ├── Container lifecycle
+│   ├── docker logs
+│   └── docker inspect
+│   │
+│   └── Q: Inspect container details and logs
+│
+├── 7. Docker Networking
+│   ├── Default Bridge
+│   ├── Custom Network
+│   ├── Port Mapping
+│   ├── Container Communication
+│   │
+│   ├── Q: Ping between 2 containers (default → fails hostname)
+│   ├── Q: Create custom network and ping using container name
+│   │
+│   └── Q: MySQL + Python connection fails
+│       └── Fix: use container name instead of localhost
+│
+├── 8. Docker Volumes
+│   ├── Stateless containers
+│   ├── Volume vs Bind Mount
+│   ├── Volume lifecycle
+│   │
+│   ├── Q: Run MySQL without volume → data lost
+│   └── Q: Run MySQL with volume → data persists
+│
+├── 9. Dockerfile & Image Creation
+│   ├── Instructions (FROM, COPY, CMD, RUN)
+│   ├── Python Hello World
+│   ├── Java Hello World
+│   │
+│   └── Q: Build and run custom image using Dockerfile
+│
+├── 10. Interactive Container Issue
+│   │
+│   └── Q: Python Add Program fails
+│       ├── docker run → ERROR
+│       └── Fix: docker run -it
+│
+├── 11. C Program Dockerization
+│   │
+│   └── Q: Create C program → build → run → push → export (.tar)
+│       └── Fix: use -it for input
+│
+├── 12. Web Server Containers (httpd/nginx)
+│   │
+│   └── Q: Create container + copy index.html + update webpage
+│
+├── 13. Multi-Container Setup
+│   │
+│   └── Q: Tomcat + MySQL
+│       ├── Same network
+│       ├── Create DB
+│       └── Insert & fetch data
+│
+├── 14. Docker Compose
+│   ├── docker-compose.yml
+│   ├── Services (web + db)
+│   ├── Ports, Env, Volumes
+│   │
+│   └── Q: Run multi-container app using docker compose
+│
+├── 15. Docker Swarm
+│   ├── Swarm init
+│   ├── Services
+│   ├── Scaling
+│   │
+│   └── Q: Swarm Task
+│       ├── Create image
+│       ├── Push to DockerHub
+│       ├── Deploy service
+│       ├── Scale (1 → 10 → 2)
+│       └── Update service with new image
+│
+├── 16. Security
+│   │
+│   └── Q: Scan Docker image using Trivy
+│
+└── 🔥 Core Problem Mapping
+    ├── Q: Networking issue → use container name
+    ├── Q: Data loss → use volume
+    ├── Q: Input not working → use -it
+    ├── Q: Multi-container communication → use network
+    ├── Q: Multi-service deployment → use compose
+    └── Q: Scaling containers → use swarm
