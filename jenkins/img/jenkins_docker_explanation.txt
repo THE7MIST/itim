@@ -1,0 +1,97 @@
+Jenkins + Docker + Socat Explained (Simple & Clear)
+
+Step 0 — The Real Problem Jenkins wants to run commands like: docker
+build -t app .
+
+But Jenkins asks: Where is Docker? How do I talk to it?
+
+Step 1 — Where Docker Lives Docker engine is controlled via:
+/var/run/docker.sock
+
+This socket is the “door” to Docker. All Docker commands go through it.
+
+Step 2 — Core Idea Jenkins must talk to Docker socket.
+
+Two ways to do this:
+
+  --------------------------------------------------
+  METHOD 1 (Recommended - Simple)
+  --------------------------------------------------
+  Use direct socket mount:
+
+  -v /var/run/docker.sock:/var/run/docker.sock
+
+  Meaning: Give Jenkins direct access to Docker.
+
+  Flow: Jenkins → Docker socket → Docker Engine
+
+  This is: ✔ Simple ✔ Fast ✔ Most used in real-world
+  --------------------------------------------------
+
+METHOD 2 (Advanced - Using socat)
+
+Problem: Docker uses UNIX socket Jenkins (sometimes) needs TCP
+
+Solution: Use socat as a translator
+
+socat converts: TCP → UNIX socket
+
+Flow: Jenkins → TCP → socat → Docker socket → Docker
+
+Command Explanation:
+
+docker run alpine/socat …
+
+This creates a helper container (translator)
+
+-v /var/run/docker.sock:/var/run/docker.sock Gives socat access to
+Docker
+
+tcp-listen:2375 → unix-connect:/var/run/docker.sock If someone connects
+to port 2375, forward it to Docker socket
+
+-p 127.0.0.1:2376:2375 Maps: Host port 2376 → Container port 2375
+
+So Jenkins uses: localhost:2376
+
+Final Flow: Jenkins ↓ localhost:2376 ↓ socat container ↓ Docker socket ↓
+Docker engine
+
+  --------------------------------------------------
+  Why This Feels Confusing
+  --------------------------------------------------
+  Because socat adds an extra layer. It’s not needed
+  in most local setups.
+
+  --------------------------------------------------
+
+When socat is actually needed
+
+• Jenkins running inside container without socket access • Remote Docker
+server • Strict security isolation
+
+  --------------------------------------------------
+  How to Test Your Setup
+  --------------------------------------------------
+  Add this in Jenkins build step:
+
+  docker ps
+
+  If it works: Jenkins already has Docker access
+
+  If it fails: Connection is not configured properly
+  --------------------------------------------------
+
+Final Recommendation
+
+For your setup (localhost learning):
+
+Use ONLY: -v /var/run/docker.sock:/var/run/docker.sock
+
+Do NOT use socat unless required.
+
+  ------------------
+  One-line Summary
+  ------------------
+
+Docker socket = real control socat = optional translator
