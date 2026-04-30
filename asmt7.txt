@@ -1,0 +1,485 @@
+Below is a complete, start-to-finish execution plan for your Assignment 7. It’s structured as:
+
+WHAT to do (commands/files)
+
+WHERE to do it (machine/tool)
+
+WHY it exists (concept clarity)
+
+
+This is a working CI/CD pipeline you can actually run.
+
+
+---
+
+🧭 0. Architecture Overview
+
+[Your PC] → GitHub → Jenkins → Docker → DockerHub → Kubernetes (Minikube)
+
+
+---
+
+⚙️ 1. Prerequisites (SETUP FIRST)
+
+📍 WHERE: Your system (local machine / VM)
+
+Install:
+
+sudo apt update
+sudo apt install openjdk-17-jdk docker.io git -y
+
+Start Docker:
+
+sudo systemctl start docker
+sudo usermod -aG docker $USER
+
+👉 Restart terminal after this.
+
+
+---
+
+Install Jenkins
+
+sudo apt install jenkins -y
+sudo systemctl start jenkins
+
+Access:
+
+http://localhost:8080
+
+
+---
+
+Install Minikube + kubectl
+
+curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+sudo install minikube-linux-amd64 /usr/local/bin/minikube
+
+sudo snap install kubectl --classic
+
+Start cluster:
+
+minikube start
+
+
+---
+
+🎯 WHY THIS STEP
+
+You are setting up:
+
+Java → to compile code
+
+Docker → to package app
+
+Jenkins → automation engine
+
+Kubernetes → deployment system
+
+
+
+---
+
+📁 2. Create Java Project
+
+📍 WHERE: Your local system
+
+mkdir java-jenkins-app
+cd java-jenkins-app
+
+Create file:
+
+nano HelloWorld.java
+
+public class HelloWorld {
+    public static void main(String[] args) {
+        System.out.println("Hello from CI/CD Pipeline 🚀");
+    }
+}
+
+
+---
+
+🎯 WHY
+
+This is your application artifact — everything revolves around this.
+
+
+---
+
+🌐 3. Push to GitHub
+
+📍 WHERE: Local system + GitHub
+
+git init
+git add .
+git commit -m "initial commit"
+git branch -M main
+git remote add origin https://github.com/<your-username>/java-jenkins-app.git
+git push -u origin main
+
+
+---
+
+🎯 WHY
+
+Jenkins does not use your local files → it pulls from GitHub.
+
+
+---
+
+🐳 4. Create Dockerfile
+
+📍 WHERE: Same project folder
+
+nano Dockerfile
+
+FROM openjdk:17
+WORKDIR /app
+COPY . .
+RUN javac HelloWorld.java
+CMD ["java", "HelloWorld"]
+
+
+---
+
+🎯 WHY
+
+Docker ensures:
+
+Same runtime everywhere
+
+No dependency issues
+
+
+
+---
+
+☸️ 5. Create Kubernetes Files
+
+📍 WHERE: Same project folder
+
+deployment.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: java-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: java-app
+  template:
+    metadata:
+      labels:
+        app: java-app
+    spec:
+      containers:
+      - name: java-app
+        image: <your-dockerhub-username>/java-app:v1
+
+
+---
+
+service.yaml
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: java-service
+spec:
+  type: NodePort
+  selector:
+    app: java-app
+  ports:
+    - port: 80
+      targetPort: 8080
+      nodePort: 30007
+
+
+---
+
+🎯 WHY
+
+Deployment → runs containers
+
+Service → exposes app
+
+
+
+---
+
+🔁 6. Push Updated Code Again
+
+git add .
+git commit -m "added docker + k8s"
+git push
+
+
+---
+
+🔐 7. Configure Jenkins
+
+📍 WHERE: Jenkins UI
+
+Install plugins:
+
+Git
+
+Pipeline
+
+Docker Pipeline
+
+
+
+---
+
+Add Credentials
+
+DockerHub:
+
+Go: Manage Jenkins → Credentials
+
+Add:
+
+Username
+
+Password
+
+
+
+
+---
+
+🎯 WHY
+
+Jenkins needs credentials to:
+
+Pull private repos
+
+Push Docker images
+
+
+
+---
+
+📜 8. Create Jenkins Pipeline
+
+📍 WHERE: Jenkins UI
+
+New Item → Pipeline
+
+
+
+---
+
+Paste this Jenkinsfile:
+
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_IMAGE = "<your-dockerhub-username>/java-app:v1"
+    }
+
+    stages {
+
+        stage('Clone Repo') {
+            steps {
+                git 'https://github.com/<your-username>/java-jenkins-app.git'
+            }
+        }
+
+        stage('Build Java') {
+            steps {
+                sh 'javac HelloWorld.java'
+            }
+        }
+
+        stage('Run Java') {
+            steps {
+                sh 'java HelloWorld'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t $DOCKER_IMAGE .'
+            }
+        }
+
+        stage('Push to DockerHub') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+                    sh '''
+                    echo $PASS | docker login -u $USER --password-stdin
+                    docker push $DOCKER_IMAGE
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                sh 'kubectl apply -f deployment.yaml'
+                sh 'kubectl apply -f service.yaml'
+            }
+        }
+    }
+}
+
+
+---
+
+🎯 WHY THIS PIPELINE
+
+Stage	Purpose
+
+Clone	get latest code
+Build	verify code compiles
+Run	verify logic
+Docker build	package app
+Push	store in registry
+Deploy	run in cluster
+
+
+
+---
+
+▶️ 9. Run Pipeline
+
+📍 WHERE: Jenkins UI
+
+Click:
+
+Build Now
+
+
+---
+
+✅ Verify:
+
+Jenkins Console Output:
+
+Should show:
+
+
+Hello from CI/CD Pipeline 🚀
+
+
+---
+
+DockerHub:
+
+Image should appear
+
+
+
+---
+
+Kubernetes:
+
+kubectl get pods
+kubectl get svc
+
+
+---
+
+Access App:
+
+minikube service java-service
+
+
+---
+
+🚨 TROUBLESHOOTING (VERY IMPORTANT)
+
+❌ ImagePullBackOff
+
+✔ Fix:
+
+docker push <image>
+
+
+---
+
+❌ Jenkins docker permission error
+
+✔ Fix:
+
+sudo usermod -aG docker jenkins
+sudo systemctl restart jenkins
+
+
+---
+
+❌ Kubernetes not accessing image
+
+✔ Fix:
+
+Correct image name
+
+Public DockerHub repo
+
+
+
+---
+
+❌ Port not working
+
+✔ Fix:
+
+Check NodePort range (30000–32767)
+
+
+
+---
+
+🧠 FINAL UNDERSTANDING
+
+What you built:
+
+A complete CI/CD system
+
+
+---
+
+Why it matters:
+
+Without this	With this
+
+Manual deploy	Automated deploy
+Errors	Reliable
+Slow	Fast
+
+
+
+---
+
+Real-world mapping:
+
+Tool	Role
+
+GitHub	Code storage
+Jenkins	Automation
+Docker	Packaging
+DockerHub	Registry
+Kubernetes	Deployment
+
+
+
+---
+
+🚀 If you want next level
+
+I can help you:
+
+Fix your current Kubernetes issue (you were stuck earlier)
+
+Add Flask / web app instead of Java console
+
+Add auto-trigger on git push (webhooks)
+
+
+Just say: 👉 "debug my pipeline" or "upgrade this project"
