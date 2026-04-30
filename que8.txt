@@ -1,0 +1,189 @@
+You want a clean, end-to-end working script set (Flask + Docker + Kubernetes) with new names and no confusion. Here is a production-style minimal setup you can directly run.
+
+
+---
+
+✅ 1. Flask Application (NEW NAME)
+
+student_app.py
+
+from flask import Flask
+
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "PRN: 1234567890 | Name: YourName"
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5050)
+
+
+---
+
+✅ 2. Dockerfile (NEW NAME)
+
+Dockerfile
+
+FROM python:3.9-slim
+
+WORKDIR /app
+
+COPY student_app.py .
+
+RUN pip install flask
+
+EXPOSE 5050
+
+CMD ["python", "student_app.py"]
+
+
+---
+
+✅ 3. Build Docker Image
+
+docker build -t student-flask:v2 .
+
+
+---
+
+⚠️ If using Minikube (IMPORTANT STEP)
+
+eval $(minikube docker-env)
+docker build -t student-flask:v2 .
+
+
+---
+
+✅ 4. Kubernetes Deployment (NEW NAME)
+
+student-deployment.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: student-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: student-app
+  template:
+    metadata:
+      labels:
+        app: student-app
+    spec:
+      containers:
+      - name: student-container
+        image: student-flask:v2
+        ports:
+        - containerPort: 5050
+
+
+---
+
+✅ Apply Deployment
+
+kubectl apply -f student-deployment.yaml
+
+
+---
+
+✅ 5. Kubernetes Service (NEW NAME)
+
+student-service.yaml
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: student-service
+spec:
+  type: NodePort
+  selector:
+    app: student-app
+  ports:
+    - port: 5050
+      targetPort: 5050
+      nodePort: 30007
+
+
+---
+
+✅ Apply Service
+
+kubectl apply -f student-service.yaml
+
+
+---
+
+✅ 6. Access Application
+
+Option 1 (Best for Minikube)
+
+minikube service student-service --url
+
+Option 2
+
+kubectl get svc
+
+Then open:
+
+http://<NodeIP>:30007
+
+
+---
+
+✅ 7. Verify Everything
+
+kubectl get pods
+kubectl get svc
+kubectl get deployment
+
+
+---
+
+🔥 Common Errors (You faced earlier)
+
+❌ ImagePullBackOff
+
+✔ Fix:
+
+eval $(minikube docker-env)
+docker build -t student-flask:v2 .
+
+
+---
+
+❌ Port mismatch
+
+✔ Ensure:
+
+Flask → 5050
+
+Dockerfile → 5050
+
+Kubernetes → 5050
+
+
+
+---
+
+✅ Final Output
+
+Browser will show:
+
+PRN: 1234567890 | Name: YourName
+
+
+---
+
+If you want, I can give you:
+
+.sh automation script (one-click run)
+
+Debug commands for your exact error screenshots
+
+Diagram (Pod → Service → Browser flow)
+
+
+Just say.
