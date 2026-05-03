@@ -120,4 +120,4 @@ DOCKER & CONTAINERIZATION
     ├── Q: Input not working → use -it
     ├── Q: Multi-container communication → use network
     ├── Q: Multi-service deployment → use compose
-    └── Q: Scaling containers → use swarm
+    └── Q: Scaling containers → use swarm 
