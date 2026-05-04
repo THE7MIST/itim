@@ -1,0 +1,279 @@
+Below is a full, exact, step-by-step lab including where to type each command, where to create files, and what to expect. Follow it line by line.
+
+
+---
+
+Lab: Data Sharing vs Non-Sharing in Docker Compose Volumes
+
+
+---
+
+🧭 Stage 0: Go to your working directory (on your VM)
+
+Open terminal:
+
+mkdir docker-volume-lab
+cd docker-volume-lab
+
+
+---
+
+🧭 Stage 1: Create WRONG compose file (anonymous volume)
+
+Create file:
+
+nano docker-compose.yml
+
+Paste:
+
+version: "3.8"
+
+services:
+  c1:
+    image: alpine
+    container_name: c1
+    command: sh -c "apk add --no-cache busybox-extras && tail -f /dev/null"
+    volumes:
+      - /shared
+
+  c2:
+    image: alpine
+    container_name: c2
+    command: sh -c "apk add --no-cache busybox-extras && tail -f /dev/null"
+    volumes:
+      - /shared
+
+  c3:
+    image: alpine
+    container_name: c3
+    command: sh -c "apk add --no-cache busybox-extras && tail -f /dev/null"
+    volumes:
+      - /shared
+
+Save:
+
+Press CTRL + X
+
+Press Y
+
+Press Enter
+
+
+
+---
+
+🧭 Stage 2: Start containers
+
+Run in terminal:
+
+docker compose up -d
+
+
+---
+
+🧭 Stage 3: Create file inside c1
+
+docker exec -it c1 sh
+
+Now inside container:
+
+cd /shared
+echo "Hello from c1" > sample.txt
+cat sample.txt
+exit
+
+
+---
+
+🧭 Stage 4: Try reading from c2 (FAIL case)
+
+docker exec -it c2 cat /shared/sample.txt
+
+👉 Expected:
+
+No such file or empty
+
+
+---
+
+🧭 Stage 5: Check volumes
+
+docker volume ls
+
+👉 You will see:
+
+random-volume-1
+random-volume-2
+random-volume-3
+
+
+---
+
+🧠 Conclusion (Stage 1)
+
+Anonymous volume → NOT shared
+Each container has its own storage
+
+
+---
+
+🧭 Stage 6: Stop everything
+
+docker compose down -v
+
+
+---
+
+🧭 Stage 7: Edit compose file (FIXED version)
+
+nano docker-compose.yml
+
+Replace with:
+
+version: "3.8"
+
+services:
+  c1:
+    image: alpine
+    container_name: c1
+    command: sh -c "apk add --no-cache busybox-extras && tail -f /dev/null"
+    volumes:
+      - mydata:/shared
+
+  c2:
+    image: alpine
+    container_name: c2
+    command: sh -c "apk add --no-cache busybox-extras && tail -f /dev/null"
+    volumes:
+      - mydata:/shared
+
+  c3:
+    image: alpine
+    container_name: c3
+    command: sh -c "apk add --no-cache busybox-extras && tail -f /dev/null"
+    volumes:
+      - mydata:/shared
+
+volumes:
+  mydata:
+
+Save again (CTRL + X, Y, Enter)
+
+
+---
+
+🧭 Stage 8: Start again
+
+docker compose up -d
+
+
+---
+
+🧭 Stage 9: Create file in c1
+
+docker exec -it c1 sh
+
+Inside:
+
+cd /shared
+echo "Hello from c1" > sample.txt
+exit
+
+
+---
+
+🧭 Stage 10: Read from c2 (SUCCESS)
+
+docker exec -it c2 cat /shared/sample.txt
+
+👉 Output:
+
+Hello from c1
+
+
+---
+
+🧭 Stage 11: Modify from c3
+
+docker exec -it c3 sh
+
+Inside:
+
+cd /shared
+echo "Updated by c3" >> sample.txt
+exit
+
+
+---
+
+🧭 Stage 12: Verify from c1
+
+docker exec -it c1 cat /shared/sample.txt
+
+👉 Output:
+
+Hello from c1
+Updated by c3
+
+
+---
+
+🧭 Stage 13: Verify volume
+
+docker volume ls
+
+👉 Output:
+
+mydata
+
+
+---
+
+🧭 Stage 14: Inspect volume usage
+
+docker inspect c1 | grep -A 5 Mounts
+
+👉 All containers show:
+
+mydata mounted at /shared
+
+
+---
+
+🧠 Final Understanding
+
+Anonymous volume → separate per container
+Named volume → shared across containers
+
+
+---
+
+🎯 Final Memory
+
+No name → no sharing  
+Same name → shared volume
+
+
+---
+
+🔥 What you just learned
+
+Compose file creation
+
+Anonymous vs named volume behavior
+
+How to verify sharing
+
+How to debug wrong assumptions
+
+
+
+---
+
+If you want next:
+
+same lab using bind mount (host folder)
+
+where actual data is stored on disk
+
+or exam-level tricky questions based on this setup

@@ -1,0 +1,247 @@
+Here are simple, real-world examples for when you would use each Docker network type:
+
+
+---
+
+Bridge = basic
+Use when you run a single container or a simple app on one machine
+Example: running a standalone Nginx or Python app for testing on your laptop
+
+
+---
+
+Custom bridge = best for apps
+Use when multiple containers need to communicate reliably using names
+Example: API container talking to a MySQL database using db as hostname
+
+
+---
+
+Host = no isolation
+Use when you need maximum network performance or direct access to host ports
+Example: high-performance logging or monitoring service that needs full network speed
+
+
+---
+
+None = no network
+Use when container must be completely isolated with no external communication
+Example: running a secure data processing job or sensitive computation
+
+
+---
+
+Overlay = multi-machine
+Use when containers are spread across multiple servers and must communicate
+Example: microservices deployed across a cluster in Docker Swarm
+
+
+---
+
+Macvlan = real network identity
+Use when container must appear as a real device on your physical network
+Example: running a network scanner or legacy app that requires its own IP address on LAN
+
+
+---
+
+One-line memory with examples
+
+Bridge → simple local app
+Custom bridge → multi-container app
+Host → high-performance service
+None → secure isolated job
+Overlay → distributed system
+Macvlan → real network device
+
+
+Below is a simple, step-by-step lab to see Docker networking clearly.
+
+Goal
+
+Create 2 containers
+
+Try communication (fail/succeed cases)
+
+Use IP and then container name
+
+Create custom network
+
+See how DNS (name) works
+
+
+
+---
+
+Step 0: Clean start (optional)
+
+docker rm -f c1 c2 2>/dev/null
+docker network rm mynet 2>/dev/null
+
+
+---
+
+Step 1: Run two containers (default network)
+
+docker run -dit --name c1 alpine sh
+docker run -dit --name c2 alpine sh
+
+
+---
+
+Step 2: Install tools inside containers
+
+Enter first container:
+
+docker exec -it c1 sh
+
+Install ping:
+
+apk add iputils
+
+Exit:
+
+exit
+
+Repeat for c2:
+
+docker exec -it c2 sh
+apk add iputils
+exit
+
+
+---
+
+Step 3: Try communication using container name (default network)
+
+docker exec -it c1 ping c2
+
+Expected
+
+This will FAIL (default bridge has no DNS between containers)
+
+
+
+---
+
+Step 4: Get IP of c2
+
+docker inspect c2 --format '{{.NetworkSettings.Networks.bridge.IPAddress}}'
+
+Example output
+
+172.17.0.3
+
+
+---
+
+Step 5: Try communication using IP
+
+docker exec -it c1 ping 172.17.0.3
+
+Expected
+
+This works
+
+
+
+---
+
+Observation so far
+
+Default bridge:
+IP works
+Name does NOT work
+
+
+---
+
+Step 6: Create custom bridge network
+
+docker network create mynet
+
+
+---
+
+Step 7: Connect both containers to new network
+
+docker network connect mynet c1
+docker network connect mynet c2
+
+
+---
+
+Step 8: Get new IP in custom network
+
+docker inspect c2 --format '{{.NetworkSettings.Networks.mynet.IPAddress}}'
+
+
+---
+
+Step 9: Test communication using NAME (important)
+
+docker exec -it c1 ping c2
+
+Expected
+
+This works now
+
+
+
+---
+
+Step 10: Test communication using IP again
+
+docker exec -it c1 ping <new-ip>
+
+
+---
+
+Step 11: Share data using simple HTTP (optional but powerful)
+
+Run HTTP server in c2:
+
+docker exec -it c2 sh
+apk add python3
+python3 -m http.server 8000
+
+Open another terminal:
+
+Access from c1:
+
+docker exec -it c1 sh
+apk add curl
+curl http://c2:8000
+
+
+---
+
+Final Observations
+
+Default bridge:
+- No DNS
+- Only IP works
+
+Custom bridge:
+- DNS works
+- Name-based communication works
+
+Docker networking = DNS + isolation + connectivity
+
+
+---
+
+Final mental model
+
+Same network → communicate
+Different network → isolated
+Custom network → name works
+
+
+---
+
+If you want next:
+
+same example with API + DB
+
+or debugging when communication fails
