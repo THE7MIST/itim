@@ -1,0 +1,13 @@
+apiVersion: v1              # API version (core Kubernetes objects like Pod)
+kind: Pod                  # Type of resource → Pod
+
+metadata:
+  name: nginx              # Name of the Pod (used to identify it)
+
+spec:                      # Specification of what should run
+  containers:              # List of containers inside this Pod
+    - name: nginx          # Name of the container
+      image: nginx:1.14.2  # Docker image to use (FIXED: was 'nginxx' → wrong)
+
+      ports:               # Ports exposed by the container
+        - containerPort: 80  # Port inside the container (nginx runs on 80)
