@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Create new Git repository
-mkdir git_sce1
-cd git_sce1
+mkdir git_sce_1
+cd git_sce_1
 
 # Initialize git
 git init
