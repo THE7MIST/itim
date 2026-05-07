@@ -1,0 +1,160 @@
+AWS VPC + PUBLIC EC2 + PRIVATE EC2 + FILE TRANSFER
+COMPLETE MIND MAP
+
+Region
+└── VPC (1)
+    ├── CIDR: 10.0.0.0/16
+    │
+    ├── Internet Gateway (1)
+    │
+    ├── Route Tables
+    │   ├── Public Route Table
+    │   │   ├── 10.0.0.0/16 → local
+    │   │   └── 0.0.0.0/0 → IGW
+    │   │
+    │   └── Main Route Table (default/private)
+    │       └── 10.0.0.0/16 → local
+    │
+    ├── Subnets (2)
+    │   ├── PublicSubnet
+    │   │   ├── CIDR: 10.0.0.0/24
+    │   │   ├── Auto Public IP: ENABLED
+    │   │   └── Associated → Public Route Table
+    │   │
+    │   └── PrivateSubnet
+    │       ├── CIDR: 10.0.1.0/24
+    │       ├── Auto Public IP: DISABLED
+    │       └── Uses Main Route Table
+    │
+    ├── Security Groups (2)
+    │   ├── public-sg
+    │   │   ├── SSH 22 ← 0.0.0.0/0
+    │   │   └── Attached → Public EC2
+    │   │
+    │   └── private-sg
+    │       ├── SSH 22 ← public-sg
+    │       └── Attached → Private EC2
+    │
+    └── EC2 Instances (2)
+        ├── Public EC2
+        │   ├── Public IP: YES
+        │   ├── Subnet: PublicSubnet
+        │   ├── SG: public-sg
+        │   └── Accessible from internet
+        │
+        └── Private EC2
+            ├── Public IP: NO
+            ├── Subnet: PrivateSubnet
+            ├── SG: private-sg
+            └── Accessible ONLY via Public EC2
+
+
+
+
+1. Create VPC
+2. Create Public Subnet
+3. Create Private Subnet
+4. Enable Auto Public IP on PublicSubnet
+5. Create Internet Gateway
+6. Attach IGW to VPC
+7. Create Public Route Table
+8. Add Route:
+      0.0.0.0/0 → IGW
+9. Associate PublicSubnet with Public Route Table
+10. Create public-sg
+11. Add SSH rule:
+      22 ← 0.0.0.0/0
+12. Create private-sg
+13. Add SSH rule:
+      22 ← public-sg
+14. Launch Public EC2
+15. Launch Private EC2
+16. SSH Windows → Public EC2
+17. Copy PEM into Public EC2
+18. chmod 400 pem
+19. SSH Public EC2 → Private EC2
+20. Create 10 files
+21. Transfer files Public → Private
+
+
+
+
+# =========================================
+# WINDOWS → PUBLIC EC2
+# =========================================
+
+ssh -i "shPemKeyPair.pem" ubuntu@PUBLIC_IP
+
+
+# =========================================
+# COPY PEM TO PUBLIC EC2
+# RUN ON WINDOWS
+# =========================================
+
+scp -i "shPemKeyPair.pem" "shPemKeyPair.pem" ubuntu@PUBLIC_IP:/home/ubuntu/
+
+
+# =========================================
+# FIX PEM PERMISSIONS
+# RUN INSIDE PUBLIC EC2
+# =========================================
+
+chmod 400 shPemKeyPair.pem
+
+
+# =========================================
+# SSH PUBLIC EC2 → PRIVATE EC2
+# =========================================
+
+ssh -i "shPemKeyPair.pem" ubuntu@PRIVATE_IP
+
+
+# =========================================
+# CREATE 10 FILES
+# =========================================
+
+touch file{1..10}.txt
+
+
+# =========================================
+# VERIFY FILES
+# =========================================
+
+ls file*
+
+
+# =========================================
+# PUBLIC EC2 → PRIVATE EC2 FILE TRANSFER
+# RUN INSIDE PUBLIC EC2
+# =========================================
+
+scp -i "shPemKeyPair.pem" file*.txt ubuntu@PRIVATE_IP:/home/ubuntu/
+
+
+# =========================================
+# LOGIN TO PRIVATE EC2
+# =========================================
+
+ssh -i "shPemKeyPair.pem" ubuntu@PRIVATE_IP
+
+
+# =========================================
+# VERIFY TRANSFER
+# =========================================
+
+ls file*
+
+
+Internet
+   ↓
+IGW
+   ↓
+Public Route Table
+   ↓
+PublicSubnet
+   ↓
+Public EC2 (Bastion Host)
+   ↓
+PrivateSubnet
+   ↓
+Private EC2
