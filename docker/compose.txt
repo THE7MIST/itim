@@ -1,12 +1,7 @@
 Below is a full, exact, step-by-step lab including where to type each command, where to create files, and what to expect. Follow it line by line.
 
-
----
-
 Lab: Data Sharing vs Non-Sharing in Docker Compose Volumes
 
-
----
 
 🧭 Stage 0: Go to your working directory (on your VM)
 
